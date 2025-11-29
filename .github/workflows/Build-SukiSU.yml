@@ -153,9 +153,28 @@ jobs:
       - name: Initialize repo and sync
         run: |
           mkdir kernel_workspace && cd kernel_workspace
-          git clone --recursive https://github.com/crdroidandroid/android_kernel_oneplus_sm8550 -b 16.0 kernel_platform --depth=1
-          mkdir kernel_platform/common
-          
+          repo init -u https://github.com/juzi3633/kernel_manifest.git -b refs/heads/oneplus/${{ github.event.inputs.CPU }} -m ${{ github.event.inputs.FEIL }}.xml --depth=1
+          repo sync
+          if [  -e kernel_platform/common/BUILD.bazel ]; then
+          sed -i '/^[[:space:]]*"protected_exports_list"[[:space:]]*:[[:space:]]*"android\/abi_gki_protected_exports_aarch64",$/d' kernel_platform/common/BUILD.bazel
+          fi
+          if [  -e kernel_platform/msm-kernel/BUILD.bazel ]; then
+          sed -i '/^[[:space:]]*"protected_exports_list"[[:space:]]*:[[:space:]]*"android\/abi_gki_protected_exports_aarch64",$/d' kernel_platform/msm-kernel/BUILD.bazel
+          fi
+          rm kernel_platform/common/android/abi_gki_protected_exports_* || echo "No protected exports!"
+          rm kernel_platform/msm-kernel/android/abi_gki_protected_exports_* || echo "No protected exports!"
+
+      # 删除 -dirty 后缀
+      - name: Force remove -dirty suffix
+        run: |
+          cd kernel_workspace/kernel_platform
+          sed -i 's/ -dirty//g' common/scripts/setlocalversion
+          sed -i 's/ -dirty//g' msm-kernel/scripts/setlocalversion
+          sed -i 's/ -dirty//g' external/dtc/scripts/setlocalversion
+          sed -i '$i res=$(echo "$res" | sed '\''s/-dirty//g'\'')' common/scripts/setlocalversion
+          git add -A
+          git commit -m "Force remove -dirty suffix from kernel version"
+
       # 添加 SukiSU Ultra
       - name: Add KernelSU-SukiSU Ultra
         run: |
