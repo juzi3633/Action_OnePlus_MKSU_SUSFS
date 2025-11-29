@@ -154,6 +154,7 @@ jobs:
         run: |
           mkdir kernel_workspace && cd kernel_workspace
           git clone --recursive https://github.com/crdroidandroid/android_kernel_oneplus_sm8550 -b 16.0 kernel_platform --depth=1
+          mkdir kernel_platform/common
           
       # 添加 SukiSU Ultra
       - name: Add KernelSU-SukiSU Ultra
